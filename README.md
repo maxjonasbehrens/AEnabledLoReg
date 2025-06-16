@@ -15,6 +15,8 @@ Patient subgroups are subsequently identified by analyzing the coefficients of l
 
 ## Repository Structure
 
+<pre>
+```
 AEnabledLoReg/
 ├── data/
 │   ├── raw/ (Input raw data, e.g., prevent_st2.sas7bdat)
@@ -31,6 +33,9 @@ AEnabledLoReg/
     │   ├── loregs.py                     # Weighted regression functions
     │   └── weights.py                    # Kernel weighting functions
     └── singlesite_prevent.script.py      # Main Python script to run the analysis
+```
+</pre>
+
 
 ## How to Run the Analysis
 
