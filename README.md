@@ -39,34 +39,73 @@ AEnabledLoReg/
 
 ## How to Run the Analysis
 
-Follow these steps to train our method:
+### For Reproducibility Testing
 
-### Step 1: Prepare the Data
+We provide a complete pipeline with synthetic data to comply with the reproducibility requirements. This allows reviewers and researchers to validate our methodology without access to the original clinical data.
+
+#### Full Reproducibility Validation (2-3 hours)
+```bash
+./run_reproducibility_pipeline.sh full
+```
+
+The pipeline will:
+1. Generate a synthetic COPD dataset with 76 predictors and realistic clinical relationships
+2. Process the data using the same preprocessing pipeline
+3. Run the complete multi-seed analysis
+4. Generate all figures and results
+5. Create a detailed reproducibility report
+
+### For Original Data Analysis
+
+If you have access to the original PREVENT study data, follow these steps:
+
+#### Step 1: Prepare the Data
 
 Place your raw data file (e.g., prevent_st2.sas7bdat) into the data/raw/ directory.
 Run the R script to process the data. This script will handle missing data imputation and feature scaling.
 
-<pre>
 ```bash
 Rscript src/data_preparation/prevent_dataprep_allinone.R
 ```
-</pre>
-
 
 The script will output two files: prevent_num_imp_varL2.csv and prevent_num_imp_varL2_std.csv in the data/processed/ directory. Rename the file you wish to use to prevent_direct_train_data.csv, as this is the filename expected by the main Python script.
 
-### Step 2: Run the Multi-Seed Analysis
+#### Step 2: Run the Multi-Seed Analysis
 
 The main analysis is executed by the singlesite_prevent.script.py script.
 
-<pre>
 ```bash
 python src/singlesite_prevent.script.py
 ```
-</pre>
 
 The script will train the models (CompositeAE, VanillaAE, PCA) across 15 different random seeds, perform stability analysis, and save results and plots to the results/figures/paper02/ directory.
 
-### Step 3: Interpreting the Results
+#### Step 3: Interpreting the Results
 
 The script performs a comprehensive stability analysis. A critical part of this process is the manual alignment of latent dimensions across different seeds, which is done in the manual_ld_alignment_map dictionary within the script. The latent dimensions are given conceptual names (e.g., "Gas_Trapping", "Airflow_Obstruction") based on their correlation with the original clinical features. You must perform this interpretation and update the map if you retrain the models on new seeds or data.
+
+## Reproducibility and Data Availability
+
+### Synthetic Dataset
+
+Since the original PREVENT study data contains sensitive patient information and cannot be shared, we provide a synthetic dataset. The synthetic dataset includes:
+
+- 500 synthetic COPD patients
+- 76 clinical predictor variables across all major categories
+- Realistic missing data patterns
+- Appropriate correlations between variables
+- SGRQ outcome variable with clinically meaningful relationships
+
+See `SYNTHETIC_DATA_DOCUMENTATION.md` for detailed information about the synthetic dataset.
+
+### Installation Requirements
+
+#### Python Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+#### R Dependencies
+```r
+install.packages(c("dplyr", "haven", "VIM", "DataExplorer"))
+```
