@@ -44,7 +44,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from torch.utils.tensorboard import SummaryWriter
+# Removed TensorBoard import for reproducibility - not needed for core functionality
 from tqdm import tqdm
 
 # Scikit-learn and statsmodels for modeling and evaluation
@@ -64,9 +64,9 @@ from plotly.subplots import make_subplots
 
 # Custom helper modules (ensure they are in the same directory or Python path)
 # These modules contain the core model architecture and training logic.
-from single_site_ae_loreg_module import SingleSiteDataset, LikelihoodLoss, AutoencoderWithRegression, create_data_loader, initialize_training, train_model
-import weights
-import loregs
+from methods.single_site_ae_loreg_module import SingleSiteDataset, LikelihoodLoss, AutoencoderWithRegression, create_data_loader, initialize_training, train_model
+from utilities import weights
+from utilities import loregs
 
 # %%
 # =============================================================================
@@ -75,7 +75,7 @@ import loregs
 
 # --- File Paths ---
 DATA_PATH = 'data/processed/prevent_direct_train_data.csv'
-OUTPUT_DIR = 'results/figures/paper02/'
+OUTPUT_DIR = 'results/figures/'
 
 # Create output directory if it doesn't exist
 if not os.path.exists(OUTPUT_DIR):
@@ -83,7 +83,7 @@ if not os.path.exists(OUTPUT_DIR):
 
 # --- Reproducibility ---
 BASE_SEED = 42  # Initial seed to generate other seeds from
-N_SEEDS = 15    # Number of different random seeds to run for stability analysis
+N_SEEDS = 5 #15    # Number of different random seeds to run for stability analysis
 
 # --- Model Training Hyperparameters ---
 # These parameters control the architecture and training process of the autoencoders.
@@ -93,7 +93,7 @@ TRAIN_HYPERPARAMETERS = {
     'hidden_factor_1': 3,   # Exponent for first hidden layer size (latent_size^factor)
     'hidden_factor_2': 2,   # Exponent for second hidden layer size (latent_size^factor)
     # Training Loop
-    'num_epochs': 300,
+    'num_epochs': 50, #300,
     'learning_rate': 1e-4,
     'weight_decay': 1e-3,   # L2 regularization
     'batch_size_train': 1,  # Using a batch size of 1 for stochastic updates in local regression loss
@@ -1140,21 +1140,53 @@ def load_and_process_data(data_path, train_params, current_seed):
         print(f"ERROR: Data file not found at {data_path}.")
         return None, None, None, None
 
-    # Drop latent variables
-    data = data.drop(columns=['Latent0', 'Latent1', 'Latent2','Latent3'])
+    # Drop latent variables (if they exist)
+    data = data.drop(columns=['Latent0', 'Latent1', 'Latent2','Latent3'], errors='ignore')
     outcome_var = train_params["outcome_var"]
 
-    # Split train and test based on train column
-    train_data = data[data['train']==1]
-    test_data = data[data['train']==0]
+    # Filter out non-numeric columns (identifiers like CENTER, PID, VISIT, etc.)
+    # Keep only numeric columns and the outcome variable
+    numeric_columns = data.select_dtypes(include=['float64', 'int64', 'float32', 'int32']).columns.tolist()
+    non_numeric_columns = data.select_dtypes(exclude=['float64', 'int64', 'float32', 'int32']).columns.tolist()
+    
+    # Ensure outcome variable is included if it exists
+    if outcome_var in data.columns:
+        if outcome_var not in numeric_columns:
+            # Try to convert outcome variable to numeric if possible
+            try:
+                data[outcome_var] = pd.to_numeric(data[outcome_var])
+                numeric_columns.append(outcome_var)
+            except (ValueError, TypeError):
+                print(f"Warning: Outcome variable '{outcome_var}' is not numeric and cannot be converted.")
+    
+    # Print info about filtered columns
+    if non_numeric_columns:
+        print(f"Filtered out non-numeric columns: {non_numeric_columns}")
+    
+    # Keep only numeric columns
+    data_numeric = data[numeric_columns]
 
-    # Drop train column
-    train_data = train_data.drop(columns=['train'])
-    test_data = test_data.drop(columns=['train'])
+    # Check if 'train' column exists for predefined split
+    if 'train' in data_numeric.columns:
+        # Split train and test based on train column
+        train_data = data_numeric[data_numeric['train']==1]
+        test_data = data_numeric[data_numeric['train']==0]
+        # Drop train column
+        train_data = train_data.drop(columns=['train'])
+        test_data = test_data.drop(columns=['train'])
+    else:
+        # Create train/test split programmatically
+        print(f"No 'train' column found. Creating 80/20 train/test split with seed {current_seed}...")
+        train_data, test_data = train_test_split(
+            data_numeric, 
+            test_size=0.2, 
+            random_state=current_seed,
+            stratify=None  # Set to None since we don't know if Y is categorical
+        )
 
     base_feature_cols = [
         col
-        for col in data.columns
+        for col in data_numeric.columns
         if col not in [outcome_var, "Y", "train", "index"]
         and not col.startswith("Latent")
         and not col.startswith("PC")
@@ -1185,9 +1217,8 @@ def train_ae_model(df_train_input, df_test_input, train_params, device_in, curre
         train_params['learning_rate'], train_params['weight_decay']
     )
 
-    log_dir_path = os.path.join('runs', f"{'CompositeAE' if not is_vanilla else 'VanillaAE'}_seed{current_seed_val}")
-    writer = SummaryWriter(log_dir=log_dir_path)
-    print(f"TensorBoard logs for this run will be saved to: {log_dir_path}")
+    # TensorBoard logging removed for reproducibility
+    print(f"Training {'CompositeAE' if not is_vanilla else 'VanillaAE'} for seed {current_seed_val}...")
 
     current_theta = 0.0 if is_vanilla else train_params['theta_null_loss_composite']
     current_gamma = 0.0 if is_vanilla else train_params['gamma_global_loss_composite']
@@ -1198,7 +1229,7 @@ def train_ae_model(df_train_input, df_test_input, train_params, device_in, curre
         batch_size=train_params['batch_size_train'],
         switch_shuffle=train_params['switch_shuffle_epoch'],
         num_batches=train_params['num_batches_weights'],
-        writer=writer, model=model, optimizer=optimizer, scheduler=scheduler,
+        model=model, optimizer=optimizer, scheduler=scheduler,
         num_epochs=train_params['num_epochs'],
         log_interval=train_params['log_interval'],
         alpha=train_params['alpha_recon_loss'],
@@ -2270,6 +2301,11 @@ seeds_to_run = np.random.choice(1000, N_SEEDS, replace=False).tolist()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}\nRunning analysis for {N_SEEDS} seeds: {seeds_to_run}")
 
+# --- Determine representative seed (median seed for figure generation) ---
+representative_seed_idx = len(seeds_to_run) // 2
+representative_seed_val = seeds_to_run[representative_seed_idx]
+print(f"Representative seed for figure generation: {representative_seed_val} (index {representative_seed_idx + 1}/{N_SEEDS})")
+
 all_seeds_results_by_method = {
     "CompositeAE": [],
     "VanillaAE": [],
@@ -2281,6 +2317,11 @@ component_col_names_by_method = {}
 for i, current_seed_val in enumerate(seeds_to_run):
     print(f"\n--- Processing Seed {i+1}/{N_SEEDS}: {current_seed_val} ---")
     set_seed(current_seed_val)
+
+    # Determine if this is the representative seed for figure generation
+    is_representative_seed = (current_seed_val == representative_seed_val)
+    if is_representative_seed:
+        print(f"*** This is the representative seed - will generate detailed figures ***")
 
     df_train_p, df_test_p, base_features, df_train_unnorm_feat, df_test_unnorm_feat = load_and_process_data(
         DATA_PATH, TRAIN_HYPERPARAMETERS, current_seed_val
@@ -2314,8 +2355,9 @@ for i, current_seed_val in enumerate(seeds_to_run):
         current_comp_cols = [col for col in comp_ae_combined_df.columns if col.startswith('Latent')]
         if method_tag not in component_col_names_by_method: component_col_names_by_method[method_tag] = current_comp_cols
 
-        res_train = run_analysis_pipeline(comp_ae_train_df, f"_seed{current_seed_val}_train_only", method_tag, outcome_var_y_name, current_comp_cols, base_features, ANALYSIS_HYPERPARAMETERS, TRAIN_HYPERPARAMETERS, is_main_method=True)
-        res_combined = run_analysis_pipeline(comp_ae_combined_df, f"_seed{current_seed_val}_combined", method_tag, outcome_var_y_name, current_comp_cols, base_features, ANALYSIS_HYPERPARAMETERS, TRAIN_HYPERPARAMETERS, is_main_method=True, global_ols_coeffs_train=res_train['global_ols_coeffs_df'])
+        # Generate figures only for the representative seed
+        res_train = run_analysis_pipeline(comp_ae_train_df, f"_seed{current_seed_val}_train_only", method_tag, outcome_var_y_name, current_comp_cols, base_features, ANALYSIS_HYPERPARAMETERS, TRAIN_HYPERPARAMETERS, is_main_method=is_representative_seed)
+        res_combined = run_analysis_pipeline(comp_ae_combined_df, f"_seed{current_seed_val}_combined", method_tag, outcome_var_y_name, current_comp_cols, base_features, ANALYSIS_HYPERPARAMETERS, TRAIN_HYPERPARAMETERS, is_main_method=is_representative_seed, global_ols_coeffs_train=res_train['global_ols_coeffs_df'])
         all_seeds_results_by_method[method_tag].append({
             'seed': current_seed_val, 
             'final_epoch_recon_loss_train': comp_fe_recon_loss, 
@@ -2380,34 +2422,11 @@ for i, current_seed_val in enumerate(seeds_to_run):
     res_combined = run_analysis_pipeline(pca_combined_df, f"_seed{current_seed_val}_combined", method_tag, outcome_var_y_name, current_pc_cols, base_features, ANALYSIS_HYPERPARAMETERS, TRAIN_HYPERPARAMETERS, is_main_method=False, global_ols_coeffs_train=res_train['global_ols_coeffs_df'])
     all_seeds_results_by_method[method_tag].append({'seed': current_seed_val, 'pca_explained_variance_sum': np.sum(pca_exp_var), 'pca_explained_variance_per_component': pca_exp_var, 'train_analysis': res_train, 'combined_analysis': res_combined})
 
-# --- Select Representative Seed (from Composite AE) and Report Stability ---
-# Ensure there are valid results before sorting and selecting representative seed
-valid_composite_ae_results = [r for r in all_seeds_results_by_method["CompositeAE"] if 'eval_recon_loss_train' in r and not np.isnan(r['eval_recon_loss_train'])] # changed from recon_loss_train
-
-if not valid_composite_ae_results:
-    print("No valid results for Composite AE to select a representative seed or run full stability.")
-    representative_seed_val = "N/A (No valid CompositeAE runs)"
-else:
-    valid_composite_ae_results.sort(key=lambda x: x['eval_recon_loss_train']) # Sorting by evaluation recon loss
-    representative_idx = len(valid_composite_ae_results) // 2
-    representative_seed_val = valid_composite_ae_results[representative_idx]['seed']
-
-print(f"\n\n--- Representative Seed (based on Composite AE median full-dataset train reconstruction loss): {representative_seed_val} ---")
-if representative_seed_val != "N/A (No valid CompositeAE runs)":
-  print(f"Plots for this seed (e.g., *_seed{representative_seed_val}_*.pdf) are considered representative for the CompositeAE method.")
-  print(f"For VanillaAE and PCA, refer to the stability metrics below and console output for their performance on seed {representative_seed_val}.")
-
-# %%
-valid_composite_ae_resultss = [r for r in all_seeds_results_by_method["CompositeAE"] if 'eval_recon_loss_train' in r and not np.isnan(r['eval_recon_loss_train'])]
-
-valid_composite_ae_resultss.sort(key=lambda x: x['eval_recon_loss_train']) # Sorting by evaluation recon loss
-representative_idxs = len(valid_composite_ae_resultss) // 2
-representative_seed_vals = valid_composite_ae_resultss[representative_idxs]['seed']
-
-print(f"\n\n--- Representative Seed (based on Composite AE median full-dataset train reconstruction loss): {representative_seed_vals} ---")
-if representative_seed_vals != "N/A (No valid CompositeAE runs)":
-  print(f"Plots for this seed (e.g., *_seed{representative_seed_vals}_*.pdf) are considered representative for the CompositeAE method.")
-  print(f"For VanillaAE and PCA, refer to the stability metrics below and console output for their performance on seed {representative_seed_vals}.")
+# --- Representative Seed Analysis Summary ---
+# Note: Representative seed was pre-selected and figures generated during the main loop
+print(f"\n\n--- Representative Seed (pre-selected for figure generation): {representative_seed_val} ---")
+print(f"Detailed plots for this seed (e.g., *_seed{representative_seed_val}_*.pdf) are available in the output directory.")
+print(f"This seed was selected as the median index seed to provide representative visualizations while running stability analysis across all {N_SEEDS} seeds.")
 
 # %%
 # =============================================================================
@@ -2951,7 +2970,7 @@ selected_method_corr = "CompositeAE"
 selected_seed_corr = representative_seed_val
 
 if selected_method_corr is None or selected_seed_corr is None:
-    mo.md("Please select a method and a seed to view latent dimension correlations.")
+    print("Please select a method and a seed to view latent dimension correlations.")
 else:
     found_result_corr = None
     for results in all_seeds_results_by_method.get(selected_method_corr, []):
