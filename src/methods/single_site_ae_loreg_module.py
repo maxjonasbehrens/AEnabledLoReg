@@ -6,13 +6,14 @@ import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import sys
+import os
 
-# Add the directory to the module search path
-sys.path.append('../../src/utilities')
+# Add the parent directory to the module search path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # Import custom modules
-import weights
-import loregs
+from utilities import weights
+from utilities import loregs
 
 # Define the dataset class
 class SingleSiteDataset(Dataset):
@@ -267,7 +268,7 @@ def initialize_training(input_size, hidden_size_1, hidden_size_2, latent_size, d
     model = AutoencoderWithRegression(input_size, hidden_size_1, hidden_size_2, latent_size).to(device).float()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, verbose=True, min_lr=1e-8)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-8)
     # Other options:
     # scheduler = lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1) # Decays LR every 30 epochs
     # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=0) 
@@ -276,7 +277,7 @@ def initialize_training(input_size, hidden_size_1, hidden_size_2, latent_size, d
     return model, optimizer, scheduler, loss_values
 
 # Function to train the model
-def train_model(input_data,outcome_var, batch_size, switch_shuffle, num_batches, writer, model, optimizer, scheduler, num_epochs, log_interval, alpha, theta, gamma, device, sigma, k_nearest, kernel):
+def train_model(input_data,outcome_var, batch_size, switch_shuffle, num_batches, model, optimizer, scheduler, num_epochs, log_interval, alpha, theta, gamma, device, sigma, k_nearest, kernel):
     """
     Train the model using single-site data.
 
@@ -526,13 +527,6 @@ def train_model(input_data,outcome_var, batch_size, switch_shuffle, num_batches,
             current_lr = optimizer.param_groups[0]['lr']
             print(f"Epoch [{epoch+1}/{num_epochs}], Avg Total Loss: {avg_epoch_total_loss:.4f}, LR: {current_lr:.6f}")
 
-            writer.add_scalar('Loss/Total', avg_epoch_total_loss, epoch)
-            writer.add_scalar('Loss/Reconstruction', avg_epoch_reconstruction_loss, epoch)
-            writer.add_scalar('Loss/Null', avg_epoch_null_loss, epoch)
-            writer.add_scalar('Loss/Global', avg_epoch_global_loss, epoch)
-            writer.add_scalar('LearningRate', current_lr, epoch) # <--- Log LR
-
-            for name, param in model.named_parameters():
-                writer.add_histogram(name, param, epoch)
+            # TensorBoard logging removed for reproducibility - logging functionality not needed for core analysis
 
     return current_loss_values
