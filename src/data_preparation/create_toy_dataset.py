@@ -321,7 +321,6 @@ def save_toy_dataset():
     
     print(f"Generated dataset with {len(df_synthetic)} observations from {df_synthetic['PID'].nunique()} patients")
     print(f"Variables included: {len(df_synthetic.columns)} columns")
-    print(f"Visit distribution:\n{df_synthetic['VISIT'].value_counts()}")
     
     # Create output directory if it doesn't exist
     # Use absolute path to ensure we save in the correct location
