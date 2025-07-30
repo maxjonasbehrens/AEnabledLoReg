@@ -175,3 +175,13 @@ results/figures/
 
 # Data files
 data/
+
+# Logs
+logs/
+
+# Reproducibility report
+REPRODUCIBILITY_REPORT.md
+checklist-for-authors.md
+
+# DS store files
+.DS_Store
