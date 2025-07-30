@@ -199,13 +199,6 @@ def ms_torch_weights(encoded,
     else:
         raise ValueError("Kernel not supported. Please choose 'gaussian' or 'tricube'.")
 
-    # Add a 1 to the start of the vector
-    # weights_target = torch.cat((torch.tensor([1.0], device=encoded.device), weights_target))
-
-    # Make weights sum to 1
-    # weights_target = weights_target / weights_target.sum()
-    # weights_external = weights_external / weights_external.sum()
-
     return weights_tar, weights_ext
 
 def ss_torch_weights(encoded, encoded_all, sigma=1, k_nearest=0.3, kernel='gaussian'):
