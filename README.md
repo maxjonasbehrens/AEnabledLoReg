@@ -22,8 +22,7 @@ AEnabledLoReg/
 │   ├── raw/ (Input raw data, e.g., prevent_st2.sas7bdat)
 │   └── processed/ (Output of the R script, e.g., prevent_direct_train_data.csv)
 ├── results/
-│   └── figures/
-│       └── paper02/ (Output plots from the analysis)
+│   └── figures/ (Output plots from the analysis)
 └── src/
     ├── data_preparation/
     │   └── prevent_dataprep_allinone.R   # R script for data preprocessing
@@ -43,17 +42,51 @@ AEnabledLoReg/
 
 We provide a complete pipeline with synthetic data to comply with the reproducibility requirements. This allows reviewers and researchers to validate our methodology without access to the original clinical data.
 
-#### Full Reproducibility Validation (2-3 hours)
+#### Full Reproducibility Validation (1-2 hours)
 ```bash
 ./run_reproducibility_pipeline.sh full
+```
+
+#### Quick Validation for Testing (10-15 minutes)
+```bash
+./run_reproducibility_pipeline.sh quick
 ```
 
 The pipeline will:
 1. Generate a synthetic COPD dataset with 76 predictors and realistic clinical relationships
 2. Process the data using the same preprocessing pipeline
-3. Run the complete multi-seed analysis
+3. Run the complete multi-seed analysis (15 seeds and 300 epochs for full mode, 3 seeds and 50 epochs for quick mode)
 4. Generate all figures and results
 5. Create a detailed reproducibility report
+
+#### Checking Results and Output
+
+After running the pipeline, you can examine the generated results in several ways:
+
+**1. Generated Figures (in `results/figures/`)**
+The analysis produces several key figures corresponding to the manuscript:
+- `Figure2_*`: Latent coefficient analysis showing how local regression coefficients deviate from global trends
+- `Figure3or4_A_*`: Patient subgroup highlighting in the latent space
+- `Figure3or4_B_*`: Forest plots showing original feature coefficients for identified subgroups
+- `Figure3or4_C_*`: Latent space profiles (z-profiles) characterizing patient subgroups
+- `Figure5_*`: Test results showing generalization of subgroup patterns
+
+**2. Log Files (in `logs/`)**
+- `main_analysis.log`: Comprehensive analysis log with numbered references [2-17] corresponding to manuscript findings. An overview of all results is provided at the end of this log file. Specific results can be searched using "[X]" (replace X with the result number, e.g., "[3]" for result 3)
+- `data_processing.log`: Data preprocessing pipeline log with outcome summary result [1]
+
+**3. Processed Data (in `data/processed/`)**
+- `prevent_direct_train_data.csv`: Final processed dataset used for analysis
+- `prevent_num_imp_varL2.csv` and `prevent_num_imp_varL2_std.csv`: Intermediate processing outputs
+
+**4. Reproducibility Report**
+The pipeline automatically generates `REPRODUCIBILITY_REPORT.md` containing:
+- Execution summary and system information
+- File verification results
+- Analysis parameter confirmation
+- Quick validation checklist
+
+**Note**: The main analysis produces a detailed log file documenting the entire process. Manuscript results can be searched within the log using reference numbers [1-17], which correspond to specific analyses and findings presented in the paper.
 
 ### For Original Data Analysis
 
@@ -78,7 +111,7 @@ The main analysis is executed by the singlesite_prevent.script.py script.
 python src/singlesite_prevent.script.py
 ```
 
-The script will train the models (CompositeAE, VanillaAE, PCA) across 15 different random seeds, perform stability analysis, and save results and plots to the results/figures/paper02/ directory.
+The script will train the models (CompositeAE, VanillaAE, PCA) across 15 different random seeds, perform stability analysis, and save results and plots to the results/figures/ directory.
 
 #### Step 3: Interpreting the Results
 
@@ -100,12 +133,21 @@ See `SYNTHETIC_DATA_DOCUMENTATION.md` for detailed information about the synthet
 
 ### Installation Requirements
 
+#### System Requirements
+
+**Python**: Version 3.8 or higher (tested with Python 3.8-3.11)
+**R**: Version 4.0 or higher (tested with R 4.0-4.3)
+
 #### Python Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
+The analysis requires Python 3.8+ for compatibility with PyTorch and modern scientific computing packages. All package versions are specified in `requirements.txt` to ensure reproducibility.
+
 #### R Dependencies
 ```r
 install.packages(c("dplyr", "haven", "VIM", "DataExplorer"))
 ```
+
+R 4.0+ is recommended for optimal performance with the data preprocessing pipeline and statistical functions used in the analysis.
