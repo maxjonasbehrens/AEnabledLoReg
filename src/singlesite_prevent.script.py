@@ -1965,8 +1965,8 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                 fig_comp_coeffs.update_layout(height=max(400, 300*num_rows_fig), title_text=f"{method_name} Comp. vs Outcome ({plot_analysis_suffix}, Color: {cbar_title})", showlegend=False, plot_bgcolor='rgba(0,0,0,0)')
                 fig_comp_coeffs.update_yaxes(showgrid=True, gridcolor='lightgray', gridwidth=0.5, zeroline=True, zerolinewidth=0.5, zerolinecolor='lightgray')
                 if 'train_only' in plot_analysis_suffix:
-                    fig_comp_coeffs.write_image(os.path.join(OUTPUT_DIR, f"Figure2_latent_coeffs_{method_name}{plot_analysis_suffix}.pdf"))
-                    print(f"[6] Saved Figure2_latent_coeffs_{method_name}{plot_analysis_suffix}.pdf")
+                    fig_comp_coeffs.write_image(os.path.join(OUTPUT_DIR, f"Figure2_latent_coeffs_{method_name}{plot_analysis_suffix}.svg"))
+                    print(f"[6] Saved Figure2_latent_coeffs_{method_name}{plot_analysis_suffix}.svg")
                 else:
                     pass
 
@@ -2005,8 +2005,8 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                 fig_subgroup_highlight.update_layout(height=max(400, 300*num_rows_fig), title_text=f"{method_name} Comp. Space with Subgroup Highlighting ({plot_analysis_suffix})", showlegend=False, plot_bgcolor='rgba(0,0,0,0)')
                 fig_subgroup_highlight.update_yaxes(showgrid=True, gridcolor='lightgray', gridwidth=0.5, zeroline=True, zerolinewidth=0.5, zerolinecolor='lightgray')
                 if 'train_only' in plot_analysis_suffix:
-                    fig_subgroup_highlight.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_A_latent_subgroup_highlight_{method_name}{plot_analysis_suffix}.pdf"))
-                    print(f"[7] Saved Figure3or4_A_latent_subgroup_highlight_{method_name}{plot_analysis_suffix}.pdf")
+                    fig_subgroup_highlight.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_A_latent_subgroup_highlight_{method_name}{plot_analysis_suffix}.svg"))
+                    print(f"[7] Saved Figure3or4_A_latent_subgroup_highlight_{method_name}{plot_analysis_suffix}.svg")
                 else:
                     pass
 
@@ -2050,8 +2050,8 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                                                        template="plotly_white",
                                                        plot_bgcolor='rgba(0,0,0,0)')
                                 # Skipped for brevity of output
-                                #fig_f_comp.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_B_forest_plot_components_{method_name}{plot_analysis_suffix}.pdf"))
-                                #print(f"Saved Figure3or4_B_forest_plot_components_{method_name}{plot_analysis_suffix}.pdf")
+                                #fig_f_comp.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_B_forest_plot_components_{method_name}{plot_analysis_suffix}.svg"))
+                                #print(f"Saved Figure3or4_B_forest_plot_components_{method_name}{plot_analysis_suffix}.svg")
                             else: print(f"Skipped forest_plot_components for {current_sg_name} as no valid coefficients for subgroups.")
                         else: print(f"Skipped forest_plot_components for {current_sg_name} due to insufficient samples in subgroups after NaN removal.")
                     else: print(f"Skipped forest_plot_components for {current_sg_name} due to insufficient samples in subgroups.")
@@ -2144,11 +2144,11 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                                                        height=max(400, len(y_labels) * 45 + 100))
                                 # If 'train_only' is in plot_analysis_suffix string
                                 if 'train_only' in plot_analysis_suffix:
-                                    fig_f_orig.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_B_forest_plot_original_features_{method_name}{plot_analysis_suffix}.pdf"))
-                                    print(f"[8] Saved Figure3or4_B_forest_plot_original_features_{method_name}{plot_analysis_suffix}.pdf")
+                                    fig_f_orig.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_B_forest_plot_original_features_{method_name}{plot_analysis_suffix}.svg"))
+                                    print(f"[8] Saved Figure3or4_B_forest_plot_original_features_{method_name}{plot_analysis_suffix}.svg")
                                 else:
-                                    fig_f_orig.write_image(os.path.join(OUTPUT_DIR, f"Figure5_forest_plot_original_features_{method_name}_test_{plot_analysis_suffix}.pdf"))
-                                    print(f"[12] Saved Figure5_forest_plot_original_features_{method_name}_test_{plot_analysis_suffix}.pdf")
+                                    fig_f_orig.write_image(os.path.join(OUTPUT_DIR, f"Figure5_forest_plot_original_features_{method_name}_test_{plot_analysis_suffix}.svg"))
+                                    print(f"[12] Saved Figure5_forest_plot_original_features_{method_name}_test_{plot_analysis_suffix}.svg")
                             else: print(f"Skipped forest_plot_original_features for {current_sg_name} as no valid interaction models.")
                     else: print(f"Skipped forest_plot_original_features for {current_sg_name} as no top MI variables found for {selected_comp_for_reporting}.")
 
@@ -2299,7 +2299,7 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                                         height=max(400, len(ordered_features_for_plot) * 45 + 100) # Increased height per feature
                                     )
                                     # Skipped saving for brevity of output
-                                    #file_path_cont_int_grouped = os.path.join(OUTPUT_DIR, f"forest_plot_cont_interaction_grouped_{method_name}{plot_analysis_suffix}.pdf")
+                                    #file_path_cont_int_grouped = os.path.join(OUTPUT_DIR, f"forest_plot_cont_interaction_grouped_{method_name}{plot_analysis_suffix}.svg")
                                     #fig_cont_interaction_grouped.write_image(file_path_cont_int_grouped)
                                     #print(f"Saved grouped continuous interaction forest plot: {file_path_cont_int_grouped}")
                             else:
@@ -2333,11 +2333,11 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                                 fig_z_train = px.bar(cluster_m_z_train, y='Cluster', x='Z-score Difference', orientation='h', color='Z-score Difference', color_continuous_scale='RdBu', range_color=analysis_params['z_profile_range'], title=f"Z-Score Diff (Subgroup Train vs Pop Train, {method_name} - {plot_analysis_suffix})")
                                 fig_z_train.update_layout(height=max(400, len(cluster_m_z_train)*20 + 100), template="plotly_white", xaxis_range=analysis_params['z_profile_range'])
                                 if 'train_only' in plot_analysis_suffix:
-                                    fig_z_train.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_C_z_profile_{method_name}{plot_analysis_suffix}.pdf"))
-                                    print(f"[9] Saved Figure3or4_C_z_profile_{method_name}{plot_analysis_suffix}.pdf")
+                                    fig_z_train.write_image(os.path.join(OUTPUT_DIR, f"Figure3or4_C_z_profile_{method_name}{plot_analysis_suffix}.svg"))
+                                    print(f"[9] Saved Figure3or4_C_z_profile_{method_name}{plot_analysis_suffix}.svg")
                                 else: 
-                                    fig_z_train.write_image(os.path.join(OUTPUT_DIR, f"Figure5_z_profile_{method_name}{plot_analysis_suffix}.pdf"))
-                                    print(f"[13] Saved Figure5_z_profile_{method_name}{plot_analysis_suffix}.pdf")
+                                    fig_z_train.write_image(os.path.join(OUTPUT_DIR, f"Figure5_z_profile_{method_name}{plot_analysis_suffix}.svg"))
+                                    print(f"[13] Saved Figure5_z_profile_{method_name}{plot_analysis_suffix}.svg")
 
                         if 0 in data_for_plots['train'].unique(): 
                             sg_current_test_data_z = data_for_plots[(data_for_plots[current_sg_flag_col] == 1) & (data_for_plots['train'] == 0)]
@@ -2350,8 +2350,8 @@ def run_analysis_pipeline(df_input_analysis, analysis_suffix, method_name, outco
                                     cluster_m_z_test = plot_z_test.groupby('Cluster')['Z-score Difference'].mean().reset_index()
                                     fig_z_test = px.bar(cluster_m_z_test, y='Cluster', x='Z-score Difference', orientation='h', color='Z-score Difference', color_continuous_scale='RdBu', range_color=analysis_params['z_profile_range'], title=f"Z-Score Diff (Subgroup Test vs Pop Train, {method_name} - {plot_analysis_suffix})")
                                     fig_z_test.update_layout(height=max(400, len(cluster_m_z_test)*20 + 100), template="plotly_white", xaxis_range=analysis_params['z_profile_range'])
-                                    #fig_z_test.write_image(os.path.join(OUTPUT_DIR, f"z_profile_test_in_{method_name}{plot_analysis_suffix}.pdf"))
-                                    #print(f"Saved z_profile_test_in_{method_name}{plot_analysis_suffix}.pdf")
+                                    #fig_z_test.write_image(os.path.join(OUTPUT_DIR, f"z_profile_test_in_{method_name}{plot_analysis_suffix}.svg"))
+                                    #print(f"Saved z_profile_test_in_{method_name}{plot_analysis_suffix}.svg")
                     else: print(f"Skipped Z-score profile plots for {current_sg_name} as no training data available for population means or no features.")
             else: 
                  print(f"Skipping component-based plots for {current_sg_name} as there are no component columns.")
@@ -2540,7 +2540,7 @@ for i, current_seed_val in enumerate(seeds_to_run):
 
 # --- Representative Seed Analysis Summary ---
 print(f"\nCompleted {N_SEEDS} seeds. Representative seed: {representative_seed_val}")
-print(f"\n[MANUSCRIPT FIGURES 2, 3A-C, 5A-B] Figures available: *_seed{representative_seed_val}_*.pdf")
+print(f"\n[MANUSCRIPT FIGURES 2, 3A-C, 5A-B] Figures available: *_seed{representative_seed_val}_*.svg")
 
 print(f"\n" + "="*80)
 print("KEY MANUSCRIPT RESULTS SUMMARY")
