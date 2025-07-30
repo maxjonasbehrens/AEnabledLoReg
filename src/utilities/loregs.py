@@ -19,12 +19,6 @@ def batch_weighted_regression(X, y, weights, intercept=True):
 
     # Calculate the weighted least squares solution
     W = np.diag(weights)
-    
-    # X_weighted = np.dot(W, X)
-    # y_weighted = np.dot(W, y)
-    
-    # # More numerically stable method to solve for beta
-    # beta = np.linalg.solve(X_weighted.T.dot(X), X_weighted.T.dot(y_weighted))
 
     # Compute the weighted version of X transpose
     XTW = np.matmul(X.T, W)
@@ -130,9 +124,6 @@ def torch_weighted_regression(X, y, weights):
     ones_column = torch.ones(len(X), 1, device=X.device)
     X = torch.cat((ones_column, X), dim=1)
 
-    # Add small value to weights to avoid singular matrix
-    # weights += 1e-6
-
     # Calculate the weighted least squares solution
     W = torch.diag(weights) 
 
@@ -150,46 +141,6 @@ def torch_weighted_regression(X, y, weights):
 
     # Calculate the weights for the weighted linear regression
     beta = torch.matmul(XTWX_inv, XTWy)
-
-    # Ensure inputs are float32
-    # X = X.float()
-    # y = y.float()
-    # weights = weights.float()
-
-    # # Add intercept term to X
-    # ones_column = torch.ones(X.size(0), 1, device=X.device, dtype=torch.float32)
-    # X_int = torch.cat((ones_column, X), dim=1) # X with intercept
-
-    # # --- Use torch.linalg.lstsq ---
-    # # Weighted least squares: minimize || W^(1/2) * (X*beta - y) ||^2
-    # # Solve A * beta = b, where A = W_sqrt * X_int and b = W_sqrt * y
-
-    # # Clamp weights to avoid sqrt of zero or negative numbers if weights can be zero
-    # # Add a small epsilon for numerical stability if weights can be exactly zero
-    # epsilon = 1e-8
-    # weights_sqrt = torch.sqrt(torch.clamp(weights, min=epsilon))
-
-    # # Apply weights
-    # A = X_int * weights_sqrt.unsqueeze(1) # Equivalent to diag(weights_sqrt) @ X_int
-    # b = y * weights_sqrt # Apply weights to y
-
-    # # Ensure b is a column vector (or matrix if y has multiple columns)
-    # if b.ndim == 1:
-    #     b = b.unsqueeze(1)
-
-    # # Solve the least squares problem
-    # try:
-    #     solution = torch.linalg.lstsq(A, b)
-    #     beta = solution.solution.squeeze() # Get the coefficient vector
-    # except torch.linalg.LinAlgError as e:
-    #      print(f"Warning: torch.linalg.lstsq failed: {e}. Returning NaN coefficients.")
-    #      # Return NaNs matching the expected output shape (num_features + intercept)
-    #      beta = torch.full((X_int.shape[1],), float('nan'), device=X.device, dtype=torch.float32)
-    # except RuntimeError as e:
-    #     # Catch other potential runtime errors (like CUDA out of memory, though less likely here)
-    #     print(f"Warning: Runtime error during torch.linalg.lstsq: {e}. Returning NaN coefficients.")
-    #     beta = torch.full((X_int.shape[1],), float('nan'), device=X.device, dtype=torch.float32)
-
 
     return beta 
 
@@ -209,9 +160,6 @@ def torch_weighted_regression_with_regularization(X, y, weights, lambda_reg):
     # Add a column of ones to X for the intercept term
     ones_column = torch.ones(len(X), 1, device=X.device)
     X = torch.cat((ones_column, X), dim=1)
-
-    # Add small value to weights to avoid singular matrix
-    # weights += 1e-6
 
     # Calculate the weighted least squares solution
     W = torch.diag(weights)
@@ -279,8 +227,6 @@ def torch_weighted_regression_gd(X, y, weights, iters=10, lr=1e-3):
     # Inner optimization loop
     for _ in range(iters):
         # --- Manual Gradient Calculation and Update ---
-        # Temporarily set beta to require grad for this iteration's gradient calc
-        # (Might be redundant if requires_grad is set at init, but safe)
         beta_req_grad = beta.detach().requires_grad_(True)
 
         # Predict using current beta
@@ -291,23 +237,14 @@ def torch_weighted_regression_gd(X, y, weights, iters=10, lr=1e-3):
         loss = torch.sum(weights.unsqueeze(1) * (residuals ** 2))
 
         if torch.isnan(loss):
-            # print(f"Warning: NaN loss in WLS GD iter {_}. Returning current beta.")
             return beta.detach().squeeze() # Return the non-NaN beta from previous step
 
-        # Calculate gradients of loss w.r.t. beta *explicitly* for the inner update
-        # Use create_graph=False to prevent this gradient calculation from
-        # interfering with the outer backward pass graph state.
         grad_beta = torch.autograd.grad(loss, beta_req_grad, create_graph=False)[0]
 
-        # Manual gradient descent step (Simple SGD)
         # Perform update outside of autograd tracking
         with torch.no_grad():
             beta -= lr * grad_beta # Update the original beta tensor
-            # We don't need to zero grad_beta.grad as torch.autograd.grad doesn't populate it
-        # --- End Manual Update ---
 
-    # Return the final optimized beta, detached.
-    # The operations mapping (X, y, weights) -> final beta remain in the outer graph.
     return beta.detach().squeeze() # Return shape (n_features + 1,)
 
 
@@ -322,17 +259,9 @@ def torch_predict(X, beta):
     Returns:
     torch.Tensor: The predicted target variable.
     """
-    # Check if X is a single data point
-    # single = len(X.shape) == 1
 
-    # if single:
-        # ones_column = torch.tensor([1.0])
-        # X_int = torch.cat((torch.tensor([1.0]), X))
-    # else:
-        # Add a column of ones to X for the intercept term
     ones_column = torch.ones(len(X), 1, device=X.device, dtype=torch.float32)
     X_int = torch.cat((ones_column, X), dim=1)
     
-    # return torch.mm(X, beta).squeeze()
     return X_int @ beta
 
