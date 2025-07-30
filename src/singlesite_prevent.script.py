@@ -88,7 +88,7 @@ if not os.path.exists(OUTPUT_DIR):
 
 # --- Reproducibility ---
 BASE_SEED = 42  # Initial seed to generate other seeds from
-N_SEEDS = 3    # Number of different random seeds to run for stability analysis
+N_SEEDS = 15    # Number of different random seeds to run for stability analysis
 
 # --- Data splitting constants ---
 TEST_SIZE_RATIO = 0.2  # Proportion of data to use for testing
@@ -103,7 +103,7 @@ TRAIN_HYPERPARAMETERS = {
     'hidden_factor_1': 3,   # Exponent for first hidden layer size (latent_size^factor)
     'hidden_factor_2': 2,   # Exponent for second hidden layer size (latent_size^factor)
     # Training Loop
-    'num_epochs': 50,
+    'num_epochs': 300,
     'learning_rate': 1e-4,
     'weight_decay': 1e-3,   # L2 regularization
     'batch_size_train': 1,  # Using a batch size of 1 for stochastic updates in local regression loss
@@ -2489,7 +2489,6 @@ for i, current_seed_val in enumerate(seeds_to_run):
     # --- Vanilla Autoencoder ---
     method_tag = "VanillaAE"
     vanilla_ae_train_hyperparameters = TRAIN_HYPERPARAMETERS.copy()
-    vanilla_ae_train_hyperparameters['num_epochs'] = 100
 
     print(f"\nTraining {method_tag} for seed {current_seed_val}...")
     van_ae_model, \
