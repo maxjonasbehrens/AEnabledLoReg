@@ -134,10 +134,9 @@ ANALYSIS_HYPERPARAMETERS = {
     'top_n_vars_forest_plot': 5, # Number of variables for interaction forest plots
     # Subgroup Definition
     'beta_coefficient_plot_type': "Difference to Global Coefficients", # Plot local betas or their diff from global
-    'beta_diff_threshold_subgroup': 0.01, # Threshold for defining subgroups based on beta differences
     # Plotting
     'z_profile_range': [-1, 1],  # Range for Z-score profile plots
-    'ci_alpha': 0.1 #0.05,            # Alpha for confidence intervals (1 - confidence level)
+    'ci_alpha': 0.1 #0.05,            # 0.1 used for toy data, 0.05 for real data.
 }
 
 # %%
